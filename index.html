@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Row Sorter — C++ DAA Visualizer</title>
+  <style>
+    /* =========================================================================
+       1. Theme Variables & Base Layout (100% Offline, Sleek Dark Mode)
+       ========================================================================= */
+    :root {
+      --bg-page: #0b1120;
+      --bg-surface: #131c31;
+      --bg-control: #1e293b;
+      --bg-control-hover: #293548;
+      --border-subtle: #2e3b52;
+      --text-primary: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --accent-text: #082f49;
+      --error-bg: rgba(239, 68, 68, 0.14);
+      --error-border: rgba(248, 113, 113, 0.5);
+      --error-text: #fecaca;
+      --shadow-stage: 0 20px 50px rgba(0, 0, 0, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+      gap: 16px;
+    }
+
+    header {
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin-top: 4px;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* =========================================================================
+       2. Panels, Controls & Buttons
+       ========================================================================= */
+    .panel {
+      width: 100%;
+      max-width: 820px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+
+    .control-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #imageUpload {
+      display: none;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 13px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background-color: var(--bg-control);
+      color: var(--text-primary);
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+    }
+
+    .btn:hover {
+      background-color: var(--bg-control-hover);
+      border-color: #475569;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled,
+    .btn.disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-run {
+      background-color: #22c55e;
+      border-color: #22c55e;
+      color: #052e16;
+    }
+
+    .btn-run:hover {
+      background-color: #16a34a;
+      border-color: #16a34a;
+    }
+
+    .select-input {
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background-color: var(--bg-control);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .select-input:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .slider-group input[type="range"] {
+      width: 110px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .slider-group input[type="range"]:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .mono-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--text-primary);
+      font-weight: 600;
+      min-width: 58px;
+      text-align: right;
+    }
+
+    /* =========================================================================
+       3. Status Banner & Stats Bar
+       ========================================================================= */
+    .status-banner {
+      display: none;
+      background-color: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .status-banner.visible {
+      display: block;
+    }
+
+    .status-banner code {
+      background-color: rgba(15, 23, 42, 0.75);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #f8fafc;
+    }
+
+    .stats-bar {
+      text-align: center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .stats-bar span {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* =========================================================================
+       4. Main Stage
+       ========================================================================= */
+    .stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      box-shadow: var(--shadow-stage);
+    }
+
+    #canvas {
+      width: 480px;
+      height: 480px;
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
+      image-rendering: pixelated;
+      border-radius: 6px;
+      background-color: #000000;
+      display: block;
+    }
+
+    /* =========================================================================
+       5. Race Mode UI (2-3 Side-by-Side Canvases)
+       ========================================================================= */
+    .hidden {
+      display: none !important;
+    }
+
+    .race-algos-box {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background-color: var(--bg-control);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      font-size: 0.82rem;
+    }
+
+    .race-algos-box label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      color: var(--text-primary);
+      user-select: none;
+    }
+
+    .race-stage {
+      width: 100%;
+      max-width: 1060px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .race-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow-stage);
+    }
+
+    .race-card-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .race-card-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .badge-finished {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background-color: #22c55e;
+      color: #052e16;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .badge-finished.visible {
+      opacity: 1;
+    }
+
+    .race-canvas {
+      width: 100%;
+      max-width: 300px;
+      aspect-ratio: 1 / 1;
+      image-rendering: pixelated;
+      border-radius: 6px;
+      background-color: #000000;
+      display: block;
+    }
+
+    .race-stats {
+      width: 100%;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .race-stats strong {
+      color: var(--text-primary);
+    }
+
+    .complexity-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.74rem;
+    }
+
+    .comp-pill {
+      padding: 3px 8px;
+      border-radius: 6px;
+      background-color: var(--bg-control);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    .comp-pill strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Image Row Sorter — C++ DAA Visualizer</h1>
+    <p>All scrambling, sorting, and metrics run in C++ (<code>./sorter --serve</code>)</p>
+  </header>
+
+  <!-- Control Bar -->
+  <section class="panel control-bar" aria-label="Controls">
+    <div class="controls-row">
+      <div class="group">
+        <label for="imageUpload" id="uploadLabel" class="btn btn-primary">Upload Image</label>
+        <input type="file" id="imageUpload" accept="image/*" />
+
+        <select id="viewModeSelect" class="select-input" aria-label="View Mode">
+          <option value="single" selected>Single Sort</option>
+          <option value="race">Race (2–3 Algos)</option>
+        </select>
+
+        <select id="algoSelect" class="select-input" aria-label="Sorting Algorithm">
+          <option value="bubble" selected>Bubble Sort</option>
+          <option value="selection">Selection Sort</option>
+          <option value="insertion">Insertion Sort</option>
+          <option value="merge">Merge Sort</option>
+          <option value="quick">Quicksort</option>
+          <option value="heap">Heap Sort</option>
+          <option value="bucket">Bucket Sort</option>
+        </select>
+
+        <select id="scrambleSelect" class="select-input" aria-label="Scramble Mode">
+          <option value="shuffle" selected>Scramble: Shuffle</option>
+          <option value="reverse">Scramble: Reverse</option>
+        </select>
+
+        <select id="modeSelect" class="select-input" aria-label="Row Mode">
+          <option value="per_row" selected>Mode: Per Row</option>
+          <option value="sequential_rows">Mode: Row-by-Row</option>
+        </select>
+      </div>
+
+      <div class="slider-group">
+        <label for="sizeSlider">Size:</label>
+        <input type="range" id="sizeSlider" min="40" max="160" step="20" value="120" />
+        <span id="sizeLabel" class="mono-val">120 × 120</span>
+      </div>
+    </div>
+
+    <div id="raceAlgosBox" class="race-algos-box hidden" aria-label="Race Algorithms (pick 2 or 3)">
+      <span style="color: var(--text-muted); font-weight: 600;">Race Algos (2–3):</span>
+      <label><input type="checkbox" name="raceAlgo" value="bubble" checked /> Bubble</label>
+      <label><input type="checkbox" name="raceAlgo" value="selection" /> Selection</label>
+      <label><input type="checkbox" name="raceAlgo" value="insertion" /> Insertion</label>
+      <label><input type="checkbox" name="raceAlgo" value="merge" checked /> Merge</label>
+      <label><input type="checkbox" name="raceAlgo" value="quick" checked /> Quicksort</label>
+      <label><input type="checkbox" name="raceAlgo" value="heap" /> Heap</label>
+      <label><input type="checkbox" name="raceAlgo" value="bucket" /> Bucket</label>
+    </div>
+
+    <div class="controls-row">
+      <div class="group">
+        <button type="button" id="runBtn" class="btn btn-run">Run</button>
+        <button type="button" id="playBtn" class="btn" disabled>Play</button>
+        <button type="button" id="pauseBtn" class="btn" disabled>Pause</button>
+        <button type="button" id="stepBtn" class="btn" disabled>Step</button>
+        <button type="button" id="resetBtn" class="btn">Reset</button>
+      </div>
+
+      <div class="group">
+        <div class="slider-group">
+          <label for="framesSlider">Frames:</label>
+          <input type="range" id="framesSlider" min="30" max="120" step="10" value="60" />
+          <span id="framesLabel" class="mono-val">60</span>
+        </div>
+
+        <div class="slider-group">
+          <label for="speedSlider">Speed:</label>
+          <input type="range" id="speedSlider" min="1" max="60" step="1" value="24" />
+          <span id="speedLabel" class="mono-val">24 fps</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Connection / Error Banner -->
+  <section id="statusBanner" class="panel status-banner" role="alert"></section>
+
+  <!-- Stats Bar (Single Sort) -->
+  <section id="singleStatsBar" class="panel stats-bar" aria-label="Statistics">
+    <div>
+      Comparisons: <span id="statComparisons">0</span> |
+      Swaps: <span id="statSwaps">0</span> |
+      C++ Time: <span id="statTime">0.0000</span> ms |
+      Frame <span id="statFrame">0 / 0</span>
+    </div>
+    <div id="singleComplexity" class="complexity-strip"></div>
+  </section>
+
+  <!-- Main Stage (Single Sort) -->
+  <main id="singleStage" class="stage">
+    <canvas id="canvas" width="120" height="120"></canvas>
+  </main>
+
+  <!-- Race Stage (2-3 Side-by-Side Canvases) -->
+  <section id="raceStage" class="race-stage hidden" aria-label="Race Comparison Stage"></section>
+
+  <script>
+    // =========================================================================
+    // 1. Configuration & DOM References
+    // =========================================================================
+    const API_SORT_URL = "http://127.0.0.1:8080/api/sort";
+    const API_RACE_URL = "http://127.0.0.1:8080/api/race";
+    const ALGO_LABELS = {
+      bubble: "Bubble Sort",
+      selection: "Selection Sort",
+      insertion: "Insertion Sort",
+      merge: "Merge Sort",
+      quick: "Quicksort",
+      heap: "Heap Sort",
+      bucket: "Bucket Sort",
+    };
+    const ALGO_COMPLEXITY = {
+      bubble:    { bestTime: "O(n)",       avgTime: "O(n^2)",     worstTime: "O(n^2)",     space: "O(1)",     stable: true },
+      selection: { bestTime: "O(n^2)",     avgTime: "O(n^2)",     worstTime: "O(n^2)",     space: "O(1)",     stable: false },
+      insertion: { bestTime: "O(n)",       avgTime: "O(n^2)",     worstTime: "O(n^2)",     space: "O(1)",     stable: true },
+      merge:     { bestTime: "O(n log n)", avgTime: "O(n log n)", worstTime: "O(n log n)", space: "O(n)",     stable: true },
+      quick:     { bestTime: "O(n log n)", avgTime: "O(n log n)", worstTime: "O(n^2)",     space: "O(log n)", stable: false },
+      heap:      { bestTime: "O(n log n)", avgTime: "O(n log n)", worstTime: "O(n log n)", space: "O(1)",     stable: false },
+      bucket:    { bestTime: "O(n + k)",   avgTime: "O(n + k)",   worstTime: "O(n^2)",     space: "O(n + k)", stable: true },
+    };
+
+    const singleComplexity = document.getElementById("singleComplexity");
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const imageUpload = document.getElementById("imageUpload");
+    const viewModeSelect = document.getElementById("viewModeSelect");
+    const algoSelect = document.getElementById("algoSelect");
+    const raceAlgosBox = document.getElementById("raceAlgosBox");
+    const scrambleSelect = document.getElementById("scrambleSelect");
+    const modeSelect = document.getElementById("modeSelect");
+    const sizeSlider = document.getElementById("sizeSlider");
+    const sizeLabel = document.getElementById("sizeLabel");
+    const framesSlider = document.getElementById("framesSlider");
+    const framesLabel = document.getElementById("framesLabel");
+    const speedSlider = document.getElementById("speedSlider");
+    const speedLabel = document.getElementById("speedLabel");
+
+    const runBtn = document.getElementById("runBtn");
+    const playBtn = document.getElementById("playBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const stepBtn = document.getElementById("stepBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const statusBanner = document.getElementById("statusBanner");
+    const singleStatsBar = document.getElementById("singleStatsBar");
+    const singleStage = document.getElementById("singleStage");
+    const raceStage = document.getElementById("raceStage");
+    const statComparisons = document.getElementById("statComparisons");
+    const statSwaps = document.getElementById("statSwaps");
+    const statTime = document.getElementById("statTime");
+    const statFrame = document.getElementById("statFrame");
+
+    // =========================================================================
+    // 2. UI State (No sorting or scrambling logic here — handled by C++)
+    // =========================================================================
+    let size = Number(sizeSlider.value);
+    let uploadedImage = null;
+    let originalRgba = null;
+
+    let decodedFrames = [];
+    let raceEntries = []; // [{ algo, frames, comparisons, swaps, elapsedMs, canvas, ctx, statsEl, badgeEl }]
+    let currentFrameIndex = 0;
+    let isPlaying = false;
+    let isFetching = false;
+    let rafId = null;
+    let lastFrameTime = 0;
+
+    let backendStats = { comparisons: 0, swaps: 0, elapsedMs: 0 };
+
+    // =========================================================================
+    // 3. Image Sampling & Canvas Rendering
+    // =========================================================================
+
+    function drawDefaultScene(offCtx, targetSize) {
+      const skyGrad = offCtx.createLinearGradient(0, 0, 0, targetSize * 0.72);
+      skyGrad.addColorStop(0, "#1e1b4b");
+      skyGrad.addColorStop(0.45, "#be185d");
+      skyGrad.addColorStop(1, "#f97316");
+      offCtx.fillStyle = skyGrad;
+      offCtx.fillRect(0, 0, targetSize, targetSize);
+
+      const sunX = targetSize * 0.68;
+      const sunY = targetSize * 0.32;
+      const sunRadius = targetSize * 0.14;
+      const sunGlow = offCtx.createRadialGradient(
+        sunX, sunY, sunRadius * 0.4,
+        sunX, sunY, sunRadius * 2.1
+      );
+      sunGlow.addColorStop(0, "rgba(254, 240, 138, 0.95)");
+      sunGlow.addColorStop(1, "rgba(251, 146, 60, 0)");
+      offCtx.fillStyle = sunGlow;
+      offCtx.beginPath();
+      offCtx.arc(sunX, sunY, sunRadius * 2.1, 0, Math.PI * 2);
+      offCtx.fill();
+
+      offCtx.fillStyle = "#fef08a";
+      offCtx.beginPath();
+      offCtx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+      offCtx.fill();
+
+      const rainbow = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#a855f7"];
+      const stripeW = Math.max(2, targetSize * 0.025);
+      offCtx.save();
+      offCtx.translate(targetSize * 0.1, targetSize * 0.55);
+      offCtx.rotate(-Math.PI / 6);
+      rainbow.forEach((color, idx) => {
+        offCtx.fillStyle = color;
+        offCtx.fillRect(0, idx * stripeW, targetSize * 1.3, stripeW + 0.5);
+      });
+      offCtx.restore();
+
+      offCtx.fillStyle = "#312e81";
+      offCtx.beginPath();
+      offCtx.moveTo(0, targetSize);
+      offCtx.lineTo(0, targetSize * 0.62);
+      offCtx.lineTo(targetSize * 0.25, targetSize * 0.42);
+      offCtx.lineTo(targetSize * 0.52, targetSize * 0.65);
+      offCtx.lineTo(targetSize * 0.78, targetSize * 0.45);
+      offCtx.lineTo(targetSize, targetSize * 0.6);
+      offCtx.lineTo(targetSize, targetSize);
+      offCtx.closePath();
+      offCtx.fill();
+
+      offCtx.fillStyle = "#0f172a";
+      offCtx.beginPath();
+      offCtx.moveTo(0, targetSize);
+      offCtx.lineTo(0, targetSize * 0.76);
+      offCtx.lineTo(targetSize * 0.18, targetSize * 0.58);
+      offCtx.lineTo(targetSize * 0.42, targetSize * 0.78);
+      offCtx.lineTo(targetSize * 0.66, targetSize * 0.54);
+      offCtx.lineTo(targetSize * 0.9, targetSize * 0.74);
+      offCtx.lineTo(targetSize, targetSize * 0.66);
+      offCtx.lineTo(targetSize, targetSize);
+      offCtx.closePath();
+      offCtx.fill();
+    }
+
+    function renderRgbaFrame(rgbaBytes, width, height) {
+      canvas.width = width;
+      canvas.height = height;
+      const imageData = new ImageData(rgbaBytes, width, height);
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    function getTotalFramesCount() {
+      if (viewModeSelect.value === "race") {
+        return raceEntries.reduce((maxLen, entry) => Math.max(maxLen, entry.frames.length), 0);
+      }
+      return decodedFrames.length;
+    }
+
+    function prepareSourceImage() {
+      pausePlayback();
+      hideServerError();
+      decodedFrames = [];
+      raceEntries = [];
+      currentFrameIndex = 0;
+      backendStats = { comparisons: 0, swaps: 0, elapsedMs: 0 };
+
+      const offscreen = document.createElement("canvas");
+      offscreen.width = size;
+      offscreen.height = size;
+      const offCtx = offscreen.getContext("2d");
+
+      if (uploadedImage) {
+        offCtx.drawImage(uploadedImage, 0, 0, size, size);
+      } else {
+        drawDefaultScene(offCtx, size);
+      }
+
+      originalRgba = new Uint8ClampedArray(offCtx.getImageData(0, 0, size, size).data);
+      renderRgbaFrame(originalRgba, size, size);
+
+      if (viewModeSelect.value === "race") {
+        renderEmptyRacePreview();
+      }
+
+      updateStatsUI();
+      updateButtonStates();
+    }
+
+    function renderEmptyRacePreview() {
+      const selected = getSelectedRaceAlgos();
+      raceStage.innerHTML = "";
+      const previewList = selected.length >= 2 ? selected : ["bubble", "merge", "quick"];
+      previewList.forEach((algo) => {
+        const card = createRaceCard(algo, 0, 0, 0, []);
+        card.ctx.putImageData(new ImageData(originalRgba, size, size), 0, 0);
+        raceStage.appendChild(card.el);
+      });
+    }
+
+    function formatComplexityHtml(comp) {
+      return (
+        `<span class="comp-pill">Best: <strong>${comp.bestTime}</strong></span>` +
+        `<span class="comp-pill">Avg: <strong>${comp.avgTime}</strong></span>` +
+        `<span class="comp-pill">Worst: <strong>${comp.worstTime}</strong></span>` +
+        `<span class="comp-pill">Space: <strong>${comp.space}</strong></span>` +
+        `<span class="comp-pill">Stable: <strong>${comp.stable ? "Yes" : "No"}</strong></span>`
+      );
+    }
+
+    function createRaceCard(algo, comparisons, swaps, elapsedMs, frames, complexity) {
+      const comp = complexity || ALGO_COMPLEXITY[algo] || ALGO_COMPLEXITY.bubble;
+      const el = document.createElement("div");
+      el.className = "race-card";
+
+      const header = document.createElement("div");
+      header.className = "race-card-header";
+
+      const title = document.createElement("div");
+      title.className = "race-card-title";
+      title.textContent = ALGO_LABELS[algo] || algo;
+
+      const badgeEl = document.createElement("span");
+      badgeEl.className = "badge-finished";
+      badgeEl.textContent = "FINISHED";
+
+      header.appendChild(title);
+      header.appendChild(badgeEl);
+
+      const cardCanvas = document.createElement("canvas");
+      cardCanvas.className = "race-canvas";
+      cardCanvas.width = size;
+      cardCanvas.height = size;
+      const cardCtx = cardCanvas.getContext("2d");
+
+      const statsEl = document.createElement("div");
+      statsEl.className = "race-stats";
+      statsEl.innerHTML =
+        `Comparisons: <strong>${comparisons.toLocaleString()}</strong> | ` +
+        `Swaps: <strong>${swaps.toLocaleString()}</strong><br>` +
+        `C++ Time: <strong>${Number(elapsedMs).toFixed(4)} ms</strong> | ` +
+        `Frame <strong>0 / ${frames.length}</strong>`;
+
+      const compEl = document.createElement("div");
+      compEl.className = "complexity-strip";
+      compEl.innerHTML = formatComplexityHtml(comp);
+
+      el.appendChild(header);
+      el.appendChild(cardCanvas);
+      el.appendChild(statsEl);
+      el.appendChild(compEl);
+
+      return { el, algo, comparisons, swaps, elapsedMs, frames, canvas: cardCanvas, ctx: cardCtx, statsEl, badgeEl };
+    }
+
+    function getSelectedRaceAlgos() {
+      return Array.from(document.querySelectorAll('input[name="raceAlgo"]:checked')).map((cb) => cb.value);
+    }
+
+    function decodeBase64Rgba(base64Str) {
+      const binary = atob(base64Str);
+      const bytes = new Uint8ClampedArray(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    // =========================================================================
+    // 4. Stats, Banner & Playback Controls
+    // =========================================================================
+
+    function showServerError(message) {
+      statusBanner.innerHTML = message;
+      statusBanner.classList.add("visible");
+    }
+
+    function hideServerError() {
+      statusBanner.classList.remove("visible");
+      statusBanner.innerHTML = "";
+    }
+
+    function updateStatsUI(complexity) {
+      statComparisons.textContent = backendStats.comparisons.toLocaleString();
+      statSwaps.textContent = backendStats.swaps.toLocaleString();
+      statTime.textContent = Number(backendStats.elapsedMs).toFixed(4);
+      const total = decodedFrames.length;
+      const shown = total > 0 ? currentFrameIndex + 1 : 0;
+      statFrame.textContent = `${shown} / ${total}`;
+      const comp = complexity || ALGO_COMPLEXITY[algoSelect.value] || ALGO_COMPLEXITY.bubble;
+      singleComplexity.innerHTML = formatComplexityHtml(comp);
+    }
+
+    function updateButtonStates() {
+      const hasFrames = getTotalFramesCount() > 0;
+      runBtn.disabled = isFetching;
+      runBtn.textContent = isFetching ? "Sorting..." : "Run";
+      playBtn.disabled = isFetching || !hasFrames || isPlaying;
+      pauseBtn.disabled = isFetching || !isPlaying;
+      stepBtn.disabled = isFetching || !hasFrames || isPlaying;
+      resetBtn.disabled = isFetching;
+    }
+
+    function showFrame(index) {
+      const total = getTotalFramesCount();
+      if (total === 0) return;
+      currentFrameIndex = Math.max(0, Math.min(index, total - 1));
+
+      if (viewModeSelect.value === "race") {
+        raceEntries.forEach((entry) => {
+          const frameIdx = Math.min(currentFrameIndex, entry.frames.length - 1);
+          entry.ctx.putImageData(new ImageData(entry.frames[frameIdx], size, size), 0, 0);
+          const finished = currentFrameIndex >= entry.frames.length - 1;
+          entry.badgeEl.classList.toggle("visible", finished);
+          entry.statsEl.innerHTML =
+            `Comparisons: <strong>${entry.comparisons.toLocaleString()}</strong> | ` +
+            `Swaps: <strong>${entry.swaps.toLocaleString()}</strong><br>` +
+            `C++ Time: <strong>${Number(entry.elapsedMs).toFixed(4)} ms</strong> | ` +
+            `Frame <strong>${frameIdx + 1} / ${entry.frames.length}</strong>`;
+        });
+      } else {
+        renderRgbaFrame(decodedFrames[currentFrameIndex], size, size);
+        updateStatsUI();
+      }
+    }
+
+    function playbackLoop(now) {
+      if (!isPlaying) return;
+
+      const fps = Number(speedSlider.value);
+      const intervalMs = 1000 / fps;
+      const total = getTotalFramesCount();
+
+      if (now - lastFrameTime >= intervalMs) {
+        lastFrameTime = now;
+        if (currentFrameIndex < total - 1) {
+          showFrame(currentFrameIndex + 1);
+        } else {
+          pausePlayback();
+          return;
+        }
+      }
+
+      rafId = requestAnimationFrame(playbackLoop);
+    }
+
+    function startPlayback() {
+      const total = getTotalFramesCount();
+      if (total === 0 || isPlaying) return;
+      if (currentFrameIndex >= total - 1) {
+        showFrame(0);
+      }
+      isPlaying = true;
+      lastFrameTime = performance.now();
+      updateButtonStates();
+      rafId = requestAnimationFrame(playbackLoop);
+    }
+
+    function pausePlayback() {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      isPlaying = false;
+      updateButtonStates();
+    }
+
+    function stepFrame() {
+      const total = getTotalFramesCount();
+      if (total === 0 || isPlaying) return;
+      if (currentFrameIndex < total - 1) {
+        showFrame(currentFrameIndex + 1);
+      }
+    }
+
+    // =========================================================================
+    // 5. C++ Backend Requests (POST /api/sort & POST /api/race)
+    // =========================================================================
+
+    async function runCppSort() {
+      if (isFetching || !originalRgba) return;
+      pausePlayback();
+      hideServerError();
+
+      const isRace = viewModeSelect.value === "race";
+      const selectedAlgos = isRace ? getSelectedRaceAlgos() : [algoSelect.value];
+
+      if (isRace && (selectedAlgos.length < 2 || selectedAlgos.length > 3)) {
+        showServerError("Please select <strong>2 or 3</strong> algorithms for Race Mode.");
+        return;
+      }
+
+      isFetching = true;
+      updateButtonStates();
+
+      const params = new URLSearchParams({
+        width: String(size),
+        height: String(size),
+        scramble: scrambleSelect.value,
+        mode: modeSelect.value,
+        maxFrames: String(framesSlider.value),
+      });
+
+      if (isRace) {
+        params.set("algos", selectedAlgos.join(","));
+      } else {
+        params.set("algo", selectedAlgos[0]);
+      }
+
+      try {
+        const endpoint = isRace ? API_RACE_URL : API_SORT_URL;
+        const response = await fetch(`${endpoint}?${params.toString()}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/octet-stream" },
+          body: originalRgba,
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Server returned HTTP ${response.status}: ${text}`);
+        }
+
+        const data = await response.json();
+
+        if (isRace) {
+          raceStage.innerHTML = "";
+          raceEntries = (data.results || []).map((res) => {
+            const frames = (res.frames || []).map(decodeBase64Rgba);
+            const card = createRaceCard(
+              res.algo,
+              res.comparisons || 0,
+              res.swaps || 0,
+              res.elapsedMs || 0,
+              frames,
+              {
+                bestTime: res.bestTime,
+                avgTime: res.avgTime,
+                worstTime: res.worstTime,
+                space: res.space,
+                stable: res.stable,
+              }
+            );
+            raceStage.appendChild(card.el);
+            return card;
+          });
+        } else {
+          decodedFrames = (data.frames || []).map(decodeBase64Rgba);
+          backendStats = {
+            comparisons: data.comparisons || 0,
+            swaps: data.swaps || 0,
+            elapsedMs: data.elapsedMs || 0,
+          };
+          updateStatsUI({
+            bestTime: data.bestTime,
+            avgTime: data.avgTime,
+            worstTime: data.worstTime,
+            space: data.space,
+            stable: data.stable,
+          });
+        }
+
+        if (getTotalFramesCount() > 0) {
+          showFrame(0);
+          isFetching = false;
+          startPlayback();
+        } else {
+          isFetching = false;
+          updateStatsUI();
+          updateButtonStates();
+        }
+      } catch (err) {
+        isFetching = false;
+        updateButtonStates();
+        showServerError(
+          `Could not reach the C++ backend at <code>http://127.0.0.1:8080</code>. ` +
+          `Start the server in your terminal with <code>./sorter --serve</code> and try again.`
+        );
+      }
+    }
+
+    // =========================================================================
+    // 6. Event Listeners & Initialization
+    // =========================================================================
+
+    viewModeSelect.addEventListener("change", () => {
+      const isRace = viewModeSelect.value === "race";
+      algoSelect.classList.toggle("hidden", isRace);
+      raceAlgosBox.classList.toggle("hidden", !isRace);
+      singleStatsBar.classList.toggle("hidden", isRace);
+      singleStage.classList.toggle("hidden", isRace);
+      raceStage.classList.toggle("hidden", !isRace);
+      prepareSourceImage();
+    });
+
+    imageUpload.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          uploadedImage = img;
+          prepareSourceImage();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    sizeSlider.addEventListener("input", () => {
+      size = Number(sizeSlider.value);
+      sizeLabel.textContent = `${size} × ${size}`;
+      prepareSourceImage();
+    });
+
+    framesSlider.addEventListener("input", () => {
+      framesLabel.textContent = framesSlider.value;
+    });
+
+    speedSlider.addEventListener("input", () => {
+      speedLabel.textContent = `${speedSlider.value} fps`;
+    });
+
+    algoSelect.addEventListener("change", () => updateStatsUI());
+    runBtn.addEventListener("click", runCppSort);
+    playBtn.addEventListener("click", startPlayback);
+    pauseBtn.addEventListener("click", pausePlayback);
+    stepBtn.addEventListener("click", stepFrame);
+    resetBtn.addEventListener("click", prepareSourceImage);
+
+    // Initialize default image on load
+    prepareSourceImage();
+  </script>
+</body>
+</html>
