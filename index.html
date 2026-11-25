@@ -6,23 +6,16 @@
   <title>Image Row Sorter — C++ DAA Visualizer</title>
   <style>
     /* =========================================================================
-       1. Theme Variables & Base Layout (100% Offline, Sleek Dark Mode)
+       1. Ultra-Minimalist Dark Editorial Palette (union.design inspired)
        ========================================================================= */
     :root {
-      --bg-page: #0b1120;
-      --bg-surface: #131c31;
-      --bg-control: #1e293b;
-      --bg-control-hover: #293548;
-      --border-subtle: #2e3b52;
-      --text-primary: #f1f5f9;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-hover: #0ea5e9;
-      --accent-text: #082f49;
-      --error-bg: rgba(239, 68, 68, 0.14);
-      --error-border: rgba(248, 113, 113, 0.5);
-      --error-text: #fecaca;
-      --shadow-stage: 0 20px 50px rgba(0, 0, 0, 0.55);
+      --bg-page: #0B0B0B;
+      --bg-control: #141414;
+      --border-hairline: #1F1F1F;
+      --border-input: #262626;
+      --text-primary: #F5F5F5;
+      --text-muted: #737373;
+      --error-text: #F5F5F5;
     }
 
     * {
@@ -32,49 +25,63 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg-page);
       color: var(--text-primary);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px 16px 40px;
-      gap: 16px;
+      padding: 36px 24px 56px;
+      gap: 20px;
+      -webkit-font-smoothing: antialiased;
     }
 
     header {
-      text-align: center;
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-hairline);
     }
 
     header h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
+      font-size: 1.15rem;
+      font-weight: 500;
       letter-spacing: -0.02em;
+      color: var(--text-primary);
     }
 
     header p {
-      margin-top: 4px;
-      font-size: 0.875rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
     }
 
+    header code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--text-primary);
+    }
+
     /* =========================================================================
-       2. Panels, Controls & Buttons
+       2. Hairline Rows, Flat Text Controls & Monochrome Inputs
        ========================================================================= */
     .panel {
       width: 100%;
-      max-width: 820px;
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 14px 18px;
+      max-width: 960px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 0 0 16px 0;
     }
 
     .control-bar {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
 
     .controls-row {
@@ -82,14 +89,14 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 16px;
     }
 
     .group {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
+      gap: 18px;
     }
 
     #imageUpload {
@@ -100,109 +107,111 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 8px 13px;
+      padding: 4px 0;
+      font-family: inherit;
       font-size: 0.85rem;
-      font-weight: 600;
-      border-radius: 8px;
-      border: 1px solid var(--border-subtle);
-      background-color: var(--bg-control);
-      color: var(--text-primary);
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid transparent;
+      border-radius: 0;
+      color: var(--text-muted);
       cursor: pointer;
       user-select: none;
-      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+      transition: color 0.15s ease, border-color 0.15s ease;
     }
 
     .btn:hover {
-      background-color: var(--bg-control-hover);
-      border-color: #475569;
-    }
-
-    .btn:active {
-      transform: translateY(1px);
+      color: var(--text-primary);
+      border-bottom-color: var(--text-primary);
     }
 
     .btn:disabled,
     .btn.disabled {
-      opacity: 0.45;
+      opacity: 0.3;
+      border-bottom-color: transparent;
       cursor: not-allowed;
       pointer-events: none;
     }
 
     .btn-primary {
-      background-color: var(--accent);
-      border-color: var(--accent);
-      color: var(--accent-text);
-    }
-
-    .btn-primary:hover {
-      background-color: var(--accent-hover);
-      border-color: var(--accent-hover);
+      color: var(--text-primary);
     }
 
     .btn-run {
-      background-color: #22c55e;
-      border-color: #22c55e;
-      color: #052e16;
+      color: var(--text-primary);
+      border-bottom-color: var(--text-muted);
     }
 
     .btn-run:hover {
-      background-color: #16a34a;
-      border-color: #16a34a;
+      border-bottom-color: var(--text-primary);
     }
 
     .select-input {
-      padding: 8px 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      border-radius: 8px;
-      border: 1px solid var(--border-subtle);
+      padding: 6px 10px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+      border-radius: 2px;
+      border: 1px solid var(--border-input);
       background-color: var(--bg-control);
       color: var(--text-primary);
       cursor: pointer;
+      outline: none;
+    }
+
+    .select-input:hover,
+    .select-input:focus {
+      border-color: var(--text-muted);
     }
 
     .select-input:disabled {
-      opacity: 0.45;
+      opacity: 0.35;
       cursor: not-allowed;
     }
 
     .slider-group {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
+      gap: 10px;
+      font-size: 0.82rem;
       color: var(--text-muted);
     }
 
     .slider-group input[type="range"] {
-      width: 110px;
-      accent-color: var(--accent);
+      width: 104px;
+      height: 2px;
+      accent-color: var(--text-primary);
+      background: var(--border-input);
       cursor: pointer;
     }
 
     .slider-group input[type="range"]:disabled {
-      opacity: 0.45;
+      opacity: 0.35;
       cursor: not-allowed;
     }
 
     .mono-val {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
       color: var(--text-primary);
-      font-weight: 600;
-      min-width: 58px;
+      font-weight: 500;
+      font-size: 0.8rem;
+      min-width: 60px;
       text-align: right;
     }
 
     /* =========================================================================
-       3. Status Banner & Stats Bar
+       3. Status Banner, Telemetry & Complexity Strip
        ========================================================================= */
     .status-banner {
       display: none;
-      background-color: var(--error-bg);
-      border: 1px solid var(--error-border);
+      padding: 12px 0;
+      border-bottom: 1px solid var(--text-primary);
       color: var(--error-text);
-      font-size: 0.88rem;
-      line-height: 1.45;
+      font-size: 0.85rem;
+      line-height: 1.5;
     }
 
     .status-banner.visible {
@@ -210,37 +219,57 @@
     }
 
     .status-banner code {
-      background-color: rgba(15, 23, 42, 0.75);
+      background-color: var(--bg-control);
+      border: 1px solid var(--border-input);
       padding: 2px 6px;
-      border-radius: 4px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      color: #f8fafc;
+      color: var(--text-primary);
     }
 
     .stats-bar {
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.88rem;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.82rem;
       color: var(--text-muted);
     }
 
     .stats-bar span {
       color: var(--text-primary);
-      font-weight: 600;
+      font-weight: 500;
+    }
+
+    .complexity-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.74rem;
+    }
+
+    .comp-pill {
+      color: var(--text-muted);
+    }
+
+    .comp-pill strong {
+      color: var(--text-primary);
+      font-weight: 500;
     }
 
     /* =========================================================================
-       4. Main Stage
+       4. Main Stage (Unboxed Obsidian Canvas)
        ========================================================================= */
     .stage {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      box-shadow: var(--shadow-stage);
+      padding: 12px 0;
+      background: transparent;
     }
 
     #canvas {
@@ -249,13 +278,13 @@
       max-width: 100%;
       aspect-ratio: 1 / 1;
       image-rendering: pixelated;
-      border-radius: 6px;
+      border: 1px solid var(--border-hairline);
       background-color: #000000;
       display: block;
     }
 
     /* =========================================================================
-       5. Race Mode UI (2-3 Side-by-Side Canvases)
+       5. Race Mode UI (Monochrome Side-by-Side Grid)
        ========================================================================= */
     .hidden {
       display: none !important;
@@ -265,21 +294,29 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      background-color: var(--bg-control);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
+      gap: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-hairline);
       font-size: 0.82rem;
     }
 
     .race-algos-box label {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       cursor: pointer;
-      color: var(--text-primary);
+      color: var(--text-muted);
       user-select: none;
+      transition: color 0.15s ease;
+    }
+
+    .race-algos-box label:hover {
+      color: var(--text-primary);
+    }
+
+    .race-algos-box input[type="checkbox"] {
+      accent-color: var(--text-primary);
+      cursor: pointer;
     }
 
     .race-stage {
@@ -287,43 +324,44 @@
       max-width: 1060px;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
+      gap: 20px;
+      padding-top: 8px;
     }
 
     .race-card {
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 14px;
+      background: transparent;
+      border: 1px solid var(--border-hairline);
+      padding: 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      box-shadow: var(--shadow-stage);
+      gap: 12px;
     }
 
     .race-card-header {
       width: 100%;
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
       gap: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-hairline);
     }
 
     .race-card-title {
-      font-size: 0.98rem;
-      font-weight: 700;
+      font-size: 0.9rem;
+      font-weight: 500;
       color: var(--text-primary);
     }
 
     .badge-finished {
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background-color: #22c55e;
-      color: #052e16;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      padding: 2px 0;
+      border-bottom: 1px solid var(--text-primary);
+      color: var(--text-primary);
       opacity: 0;
       transition: opacity 0.15s ease;
     }
@@ -337,7 +375,7 @@
       max-width: 300px;
       aspect-ratio: 1 / 1;
       image-rendering: pixelated;
-      border-radius: 6px;
+      border: 1px solid var(--border-hairline);
       background-color: #000000;
       display: block;
     }
@@ -345,37 +383,16 @@
     .race-stats {
       width: 100%;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.76rem;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.6;
       text-align: center;
     }
 
     .race-stats strong {
       color: var(--text-primary);
-    }
-
-    .complexity-strip {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 8px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.74rem;
-    }
-
-    .comp-pill {
-      padding: 3px 8px;
-      border-radius: 6px;
-      background-color: var(--bg-control);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-muted);
-    }
-
-    .comp-pill strong {
-      color: var(--accent);
-      font-weight: 600;
+      font-weight: 500;
     }
   </style>
 </head>
